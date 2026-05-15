@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/netip"
 
-	"netipx"
+	"github.com/openkaze/netipx"
 )
 
 func ExampleIPSet() {
