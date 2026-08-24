@@ -213,6 +213,78 @@ func TestFromStdIPNet(t *testing.T) {
 	}
 }
 
+func TestFromNetAddr(t *testing.T) {
+	tests := []struct {
+		name string
+		addr net.Addr
+		want netip.Addr
+		ok   bool
+	}{
+		{
+			name: "nil",
+			addr: nil,
+			ok:   false,
+		},
+		{
+			name: "IPAddr v4",
+			addr: &net.IPAddr{IP: net.IPv4(1, 2, 3, 4)},
+			want: IPv4(1, 2, 3, 4),
+			ok:   true,
+		},
+		{
+			name: "IPAddr v6",
+			addr: &net.IPAddr{IP: net.ParseIP("2001:db8::1")},
+			want: netip.MustParseAddr("2001:db8::1"),
+			ok:   true,
+		},
+		{
+			name: "IPAddr 4-in-6 unmapped",
+			addr: &net.IPAddr{IP: net.ParseIP("::ffff:1.2.3.4")},
+			want: IPv4(1, 2, 3, 4),
+			ok:   true,
+		},
+		{
+			name: "IPNet v4",
+			addr: &net.IPNet{IP: net.IPv4(192, 0, 2, 1), Mask: net.CIDRMask(24, 32)},
+			want: IPv4(192, 0, 2, 1),
+			ok:   true,
+		},
+		{
+			name: "TCPAddr",
+			addr: &net.TCPAddr{IP: net.IPv4(1, 2, 3, 4), Port: 80},
+			want: IPv4(1, 2, 3, 4),
+			ok:   true,
+		},
+		{
+			name: "UDPAddr",
+			addr: &net.UDPAddr{IP: net.ParseIP("2001:db8::2"), Port: 53},
+			want: netip.MustParseAddr("2001:db8::2"),
+			ok:   true,
+		},
+		{
+			name: "UnixAddr",
+			addr: &net.UnixAddr{Name: "/tmp/sock", Net: "unix"},
+			ok:   false,
+		},
+		{
+			name: "invalid IP",
+			addr: &net.IPAddr{IP: net.IP{0xff}},
+			ok:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := FromNetAddr(tt.addr)
+			if ok != tt.ok {
+				t.Fatalf("FromNetAddr(%#v) ok = %v; want %v", tt.addr, ok, tt.ok)
+			}
+			if got != tt.want {
+				t.Errorf("FromNetAddr(%#v) = %v; want %v", tt.addr, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestParsePrefixOrAddr(t *testing.T) {
 	tests := []struct {
 		name    string

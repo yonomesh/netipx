@@ -101,6 +101,29 @@ func FromStdIPNet(std *net.IPNet) (prefix netip.Prefix, ok bool) {
 	return netip.PrefixFrom(ip, ones), true
 }
 
+// FromNetAddr returns a netip.Addr from the standard library's net.Addr type.
+//
+// It supports the standard net.Addr implementations: *net.IPAddr, *net.IPNet,
+// *net.TCPAddr and *net.UDPAddr. If netAddr is nil or is an address type
+// without an IP (e.g. *net.UnixAddr, *net.PipeAddr), ok is false.
+func FromNetAddr(netAddr net.Addr) (addr netip.Addr, ok bool) {
+	if netAddr == nil {
+		return netip.Addr{}, false
+	}
+	switch a := netAddr.(type) {
+	case *net.IPAddr:
+		return FromStdIP(a.IP)
+	case *net.IPNet:
+		return FromStdIP(a.IP)
+	case *net.TCPAddr:
+		return FromStdIP(a.IP)
+	case *net.UDPAddr:
+		return FromStdIP(a.IP)
+	default:
+		return netip.Addr{}, false
+	}
+}
+
 // PrefixLastIP returns the last IP in the prefix.
 func PrefixLastIP(p netip.Prefix) netip.Addr {
 	a16 := p.Addr().As16()
